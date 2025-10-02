@@ -1,11 +1,14 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, status
 from datetime import datetime
-from models import Customer, Transaction, Invoice, CustomerCreate
+from models import Customer, Transaction, Invoice, CustomerCreate, CustomerUpdate
 from db import SessionDep, create_all_tables
+from sqlmodel import select
+from .routers import customers
 
 import zoneinfo
 
 app = FastAPI(lifespan=create_all_tables)
+app.include_router(customers.router)
 
 @app.get("/")
 async def root():
@@ -30,21 +33,6 @@ async def time(iso_code: str):
     tz = zoneinfo.ZoneInfo(timezone_str)
     return {"time": datetime.now(tz)}
 
-@app.post("/customers", response_model=Customer)
-async def create_customer(customer_data : CustomerCreate):
-    customer = Customer.model_validate(customer_data.model_dump())
-    customer.id = len(db_customers) + 1
-    db_customers.append(customer)
-    return customer
-
-@app.get("/customers", response_model=list[Customer])
-async def list_customer():
-    return db_customers
-
-@app.get("/customer/{customer_id}", response_model= Customer)
-async def get_customer(customer_id : int):
-    customer_response = next((customer for customer in db_customers if customer.id == customer_id), None)
-    return customer_response
 
 @app.post("/transactions")
 async def create_transaction(transaction_data : Transaction):
