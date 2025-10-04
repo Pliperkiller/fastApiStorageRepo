@@ -1,8 +1,8 @@
-from fastapi import FastAPI, HTTPException, status
+import time
+from fastapi import FastAPI, Request
 from datetime import datetime
-from models import Customer, Transaction, Invoice, CustomerCreate, CustomerUpdate
-from db import SessionDep, create_all_tables
-from sqlmodel import select
+from models import Customer, Invoice
+from db import create_all_tables
 from .routers import customers,transactions, plans
 
 import zoneinfo
@@ -11,6 +11,17 @@ app = FastAPI(lifespan=create_all_tables)
 app.include_router(customers.router)
 app.include_router(transactions.router)
 app.include_router(plans.router)
+
+
+@app.middleware("http")
+async def log_request_time(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+
+    response.headers["Process-Time"] = str(process_time)
+    return response
+
 
 @app.get("/")
 async def root():
@@ -28,7 +39,7 @@ db_customers : list[Customer] = []
 
 
 @app.get("/time/{iso_code}")
-async def time(iso_code: str):
+async def get_time_by_iso(iso_code: str):
     
     iso = iso_code.upper()
     timezone_str = country_timezones.get(iso)
