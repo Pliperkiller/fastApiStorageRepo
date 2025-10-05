@@ -5,7 +5,7 @@ from models import Customer, CustomerCreate, CustomerPlan, CustomerUpdate, Plan,
 
 router = APIRouter()
 
-@router.post("/customers", response_model=Customer,tags=["customers"])
+@router.post("/customers", response_model=Customer,tags=["customers"], status_code=status.HTTP_201_CREATED)
 async def create_customer(customer_data : CustomerCreate, session : SessionDep):
     customer = Customer.model_validate(customer_data.model_dump())
     session.add(customer)
@@ -18,14 +18,14 @@ async def create_customer(customer_data : CustomerCreate, session : SessionDep):
 async def list_customer(session : SessionDep):
     return session.exec(select(Customer)).all()
 
-@router.get("/customer/{customer_id}", response_model= Customer,tags=["customers"])
+@router.get("/customers/{customer_id}", response_model= Customer,tags=["customers"])
 async def get_customer(customer_id : int, session : SessionDep):
     customer_response = session.get(Customer, customer_id)
     if not customer_response:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail= "Customer doesn't exist")
     return customer_response
 
-@router.patch("/customer/{customer_id}", response_model= Customer, status_code=status.HTTP_201_CREATED,tags=["customers"])
+@router.patch("/customers/{customer_id}", response_model= Customer, status_code=status.HTTP_201_CREATED,tags=["customers"])
 async def update_customer(customer_id : int,customer_data : CustomerUpdate, session : SessionDep):
     customer_response = session.get(Customer, customer_id)
     if not customer_response:
@@ -39,7 +39,7 @@ async def update_customer(customer_id : int,customer_data : CustomerUpdate, sess
     session.refresh(customer_response)
     return customer_response
 
-@router.delete("/customer/{customer_id}",tags=["customers"])
+@router.delete("/customers/{customer_id}",tags=["customers"])
 async def delete_customer(customer_id : int, session : SessionDep):
     customer_response = session.get(Customer, customer_id)
     if not customer_response:
@@ -80,7 +80,7 @@ async def susbscribe_customer_to_plan(customer_id : int, plan_id : int, session 
     return customer_plan
 
 #GET /customer/123/plans?plan_status=ACTIVE
-@router.get("/customer/{customer_id}/plans", response_model=list[Plan],tags=["customers"])
+@router.get("/customers/{customer_id}/plans", response_model=list[Plan],tags=["customers"])
 async def get_suscriptions(customer_id : int, session : SessionDep, plan_status : StatusEnum = Query()):
     customer_db = session.get(Customer,customer_id)
 

@@ -1,6 +1,9 @@
 import time
-from fastapi import FastAPI, Request
+from typing import Annotated
+from fastapi import Depends, FastAPI, HTTPException, Request, status
 from datetime import datetime
+
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from models import Customer, Invoice
 from db import create_all_tables
 from .routers import customers,transactions, plans
@@ -22,10 +25,15 @@ async def log_request_time(request: Request, call_next):
     response.headers["Process-Time"] = str(process_time)
     return response
 
+security = HTTPBasic()
 
 @app.get("/")
-async def root():
-    return {"message":"Hola,mundo"}
+async def root(credentials : Annotated[HTTPBasicCredentials, Depends(security)]):
+    print(credentials)
+    if credentials.username == "ca" and credentials.password == "ro":
+        return {"message":f"Hola,{credentials.username}"}
+    else:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
 country_timezones = {
     "CO": "America/Bogota",
